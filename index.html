@@ -2,6 +2,7 @@
 <html>
 <head>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
+    <script type="text/javascript" src="src/truckPaths.js"></script>
 </head>
 <body>
 
@@ -17,74 +18,6 @@
     };
 
     var game = new Phaser.Game(config);
-
-    // The potential paths
-    var newPort = {
-        hasTruck: false,
-        x: 346,
-        y: 231,
-        neighbours: []
-    }
-    var pointSeven = {
-        hasTruck: false,
-        x: 328,
-        y: 182,
-        neighbours: [newPort]
-    }
-    var pointSix = {
-        hasTruck: false,
-        x: 369,
-        y: 114,
-        neighbours: [pointSeven]
-    }
-    var pointFive = {
-        hasTruck: false,
-        x: 271,
-        y: 123,
-        neighbours: [pointSix]
-    }
-    var pointTen = {
-        hasTruck: false,
-        x: 296,
-        y: 215,
-        neighbours: [pointSeven]
-    }
-    var pointNine = {
-        hasTruck: false,
-        x: 290,
-        y: 258,
-        neighbours: [pointTen]
-    }
-    var pointEight = {
-        hasTruck: false,
-        x: 242,
-        y: 270,
-        neighbours: [pointNine]
-    }
-    var pointFour = {
-        hasTruck: false,
-        x: 261,
-        y: 220,
-        neighbours: [pointEight]
-    }
-    var pointThree = {
-        hasTruck: false,
-        x: 171,
-        y: 148,
-        neighbours: [pointFour, pointFive]
-    }
-    var pointTwo = {
-        hasTruck: false,
-        x: 147,
-        y: 102,
-        neighbours: [pointThree]
-    }
-    var pointOne = {
-        hasTruck: false,
-        x: 174,
-        y: 48,
-        neighbours: [pointTwo]
-    }
 
     function preload ()
     {
@@ -117,32 +50,17 @@
             this.x = 174;
             this.y = 48;
         });
-
-        // this.input.setDraggable(truck);
-
-        // //  The pointer has to move 16 pixels before it's considered as a drag
-        // this.input.dragDistanceThreshold = 16;
-
-        // this.input.on('dragstart', function (pointer, selectedTruck) {
-        //     selectedTruck.setTint(0xfff000);
-        // });
-
-        // this.input.on('drag', function (pointer, selectedTruck, dragX, dragY) {
-        //     selectedTruck.x = dragX;
-        //     selectedTruck.y = dragY;
-        //     console.log(dragX)
-        //     console.log(dragY)
-        // });
-
-        // this.input.on('dragend', function (pointer, selectedTruck) {
-        //     selectedTruck.clearTint();
-        // });
         graphics = this.add.graphics();
 
         // Iterate through each path and draw lines
-        drawPath(pointOne)
+        drawPath(whiteMine)
+        drawPath(greenMine)
+        drawPath(purpleMine)
+        drawPath(blueMine)
+        drawPath(redMine)
+        drawPath(yellowMine)
 
-        traversePath(pointOne, 0, 3)
+        traversePath(whiteMine, 0, 5)
     }
 
     // Iterative function for looping through a path
@@ -162,6 +80,8 @@
         graphics.lineStyle(2, 0xffffff, 1);
         node.neighbours.forEach(neighbour => {
             graphics.fillStyle(0xffff00, 1);
+            console.log(node.x);
+            console.log(node.y);
             graphics.lineBetween(neighbour.x, neighbour.y, node.x, node.y);
             graphics.fillCircle(neighbour.x, neighbour.y, 8);
             drawPath(neighbour);
