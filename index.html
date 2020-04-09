@@ -22,13 +22,15 @@
     function preload ()
     {
         // load images
-        this.load.image('background', 'assets/board.png');
+        this.load.image('background', 'assets/background.jpg');
         this.load.image('truck', 'assets/truck.png');
+        this.load.image('dice', 'assets/dice.png');
     }
 
     function create ()
     {
         let money = 0;
+        var diceRoll = 0;
 
         let bg = this.add.sprite(0, 0, 'background');
         bg.setScale(0.2);
@@ -50,17 +52,31 @@
             this.x = 174;
             this.y = 48;
         });
-        graphics = this.add.graphics();
 
+        var dice = this.add.sprite(20, 20, 'dice1', 0).setInteractive();
+        dice.setScale(0.02);
+        dice.on('pointerdown', function (pointer) {
+            this.setTint(0xff0000);
+        });
+
+        dice.on('pointerout', function (pointer) {
+            this.clearTint();
+        });
+
+        dice.on('pointerup', function (pointer) {
+            this.clearTint();
+            diceRoll = Math.floor(Math.random() * 6) + 1
+            traversePath(whiteMine, 1, diceRoll)
+        });
+        
         // Iterate through each path and draw lines
+        graphics = this.add.graphics();
         drawPath(whiteMine)
         drawPath(greenMine)
         drawPath(purpleMine)
         drawPath(blueMine)
         drawPath(redMine)
         drawPath(yellowMine)
-
-        traversePath(whiteMine, 0, 5)
     }
 
     // Iterative function for looping through a path
