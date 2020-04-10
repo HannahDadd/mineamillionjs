@@ -145,25 +145,25 @@
     // Iterative function for looping through a path
     function traversePath(node, accumulator, stopValue) {
         node.neighbours.forEach(neighbour => {
-            if(accumulator != stopValue) {
-                traversePath(neighbour, accumulator + 1, stopValue);
-            } else {
+            if(accumulator == stopValue || neighbour == newport) {
                 graphics.fillStyle(0x000, 1);
                 graphics.fillCircle(neighbour.x, neighbour.y, 2);
+            } else {
+                traversePath(neighbour, accumulator + 1, stopValue);
             }
         });
     }
 
     function selectPath(node, accumulator, stopValue, position, cb) {
         node.neighbours.forEach(neighbour => {
-            if(accumulator != stopValue) {
-                selectPath(neighbour, accumulator + 1, stopValue, position, cb);
-            } else {
+            if(accumulator == stopValue || neighbour == newport) {
                 // the distance between neighbour.x neighbour.y and position.x position.y
                 var distance = Math.pow(Math.pow(neighbour.x - position.x, 2) + Math.pow(neighbour.y - position.y, 2), 1/2);
                 if(distance < 5) {
                     cb(neighbour);
                 }
+            } else {
+                selectPath(neighbour, accumulator + 1, stopValue, position, cb);
             }
         });
     }
