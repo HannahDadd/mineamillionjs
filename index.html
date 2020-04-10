@@ -35,31 +35,51 @@
     var movingBuggy = null;
     var diceRoll = 0;
     var diceRollText;
+    var baseNode = redMine;
+    var money = 100;
+    var moneyText;
+    var truckNo = 6;
+    var truckNoText;
+
     function create ()
     {
-        var money = 0;
-
+        var moonRocks = 0;
 
         let bg = this.add.sprite(0, 0, 'background');
         bg.setScale(0.4);
         bg.setOrigin(0,0);
 
+        // the number of moon rocks you have
+        var moonRocksText = this.add.text(670, 5, 'Moon Rocks: ' + moonRocks, { fontSize: '11px', fill: '#fff' });
+
+        var truckNo = 6;
+        var truckNoText = this.add.text(740, 21, truckNo, { fontSize: '11px', fill: '#fff' });
+        moneyText = this.add.text(690, 60, 'Money ' + money, { fontSize: '11px', fill: '#fff' });
+
         // Add the roll dice button
-        diceRollText = this.add.text(740, 41, '', { fontSize: '8px', fill: '#fff' });
+        diceRollText = this.add.text(740, 41, '', { fontSize: '11px', fill: '#fff' });
         var rollDice = this.add.sprite(700, 46, 'diceButton').setInteractive();
         rollDice.setScale(0.3);
         rollDice.on('pointerdown', function (pointer) {
             this.setTint(0xff0000);
         });
         rollDice.on('pointerup', function (pointer) {
-            this.clearTint();
+            rollDice.clearTint();
+            moonRocksText.clearTint();
+            truckNoText.clearTint();
+            moneyText.clearTint();
+
             diceRoll = Math.floor(Math.random() * 6) + 1;
             diceRollText.setText(diceRoll);
-        });
+
+            if(diceRoll == 6 || diceRoll == 1) {
+                moonRocks = moonRocks + 1;
+                moonRocksText.setText('Moon Rocks: ' + moonRocks);
+                diceRoll = 0;
+            }
+        }.bind(this));
 
         // Add the truck buying button
-        var truckNo = 6;
-        var truckNoText = this.add.text(740, 21, truckNo, { fontSize: '8px', fill: '#fff' });
         var buyTruck = this.add.sprite(700, 26, 'truckButton').setInteractive();
         buyTruck.setScale(0.3);
         buyTruck.on('pointerdown', function (pointer) {
@@ -67,15 +87,25 @@
         });
         buyTruck.on('pointerup', function (pointer) {
             buyTruck.clearTint();
-            if(truckNo != 0) {
+            if(truckNo != 0 && moonRocks >= 2 && money >= 100) {
                 truckNo = truckNo - 1;
                 truckNoText.setText(truckNo);
                 truckNoText.clearTint();
 
+                moonRocks = moonRocks - 2;
+                moonRocksText.setText('Moon Rocks: ' + moonRocks);
+
+                money = money - 100;
+                moneyText.setText('Money ' + money);
+
                 // make a truck that has been bought
-                var buggy = new Buggy({scene:this, x:redMine.x, y:redMine.y}, redMine);
-            } else {
+                var buggy = new Buggy({scene:this, x:baseNode.x, y:baseNode.y}, baseNode);
+            } else if(truckNo == 0)  {
                 truckNoText.setTint(0xff0000);
+            } else if (moonRocks < 2) {
+                moonRocksText.setTint(0xff0000);
+            } else if (money < 100) {
+                moneyText.setTint(0xff0000)
             }
         }.bind(this));
         
@@ -89,6 +119,29 @@
         drawPath(yellowMine);
     }
 
+    function update() {
+        // Record player mouse location if they can move the buggy move the buggy to the closest location
+        this.input.on('pointerup', function (pointer) {
+            if(movingBuggy) {
+                if(diceRoll > 0) {
+                    selectPath(movingBuggy.location, 1, diceRoll, pointer.position, clickedNode => {
+                        movingBuggy.x = clickedNode.x;
+                        movingBuggy.y = clickedNode.y;
+                        movingBuggy.location = clickedNode;
+                        diceRoll = 0;
+                        diceRollText.setText('');
+                        movingBuggy.clearTint();
+                        movingBuggy = null;
+                        drawPath(baseNode);
+                    });
+                } else {
+                    movingBuggy.clearTint();
+                    diceRollText.setText('');
+                }
+            }
+        });
+    }
+
     // Iterative function for looping through a path
     function traversePath(node, accumulator, stopValue) {
         node.neighbours.forEach(neighbour => {
@@ -97,25 +150,6 @@
             } else {
                 graphics.fillStyle(0x000, 1);
                 graphics.fillCircle(neighbour.x, neighbour.y, 2);
-            }
-        });
-    }
-
-    function update() {
-        // Record player mouse location if they can move the buggy move the buggy to the closest location
-        this.input.on('pointerup', function (pointer) {
-            if(movingBuggy) {
-                selectPath(movingBuggy.location, 1, diceRoll, pointer.position, clickedNode => {
-                    movingBuggy.x = clickedNode.x;
-                    movingBuggy.y = clickedNode.y;
-                    movingBuggy.location = clickedNode;
-                    diceRoll = 0;
-                    diceRollText.setText('');
-                    movingBuggy.clearTint();
-                    movingBuggy = null;
-
-                    
-                });
             }
         });
     }
@@ -159,9 +193,17 @@
             });
 
             this.on('pointerup', function (pointer) {
-                drawPath(this.location);
-                traversePath(this.location, 1, diceRoll)
-                movingBuggy = this;
+                if(this.location == newport) {
+                    money = money + 100;
+                    moneyText.setText('Money ' + money);
+                    truckNo = truckNo + 1;
+                    truckNoText.setText(truckNo);
+                    this.destroy(true);
+                } else {
+                    drawPath(this.location);
+                    traversePath(this.location, 1, diceRoll)
+                    movingBuggy = this;
+                }
             });
         }
     }
