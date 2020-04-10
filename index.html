@@ -2,7 +2,7 @@
 <html>
 <head>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
-    <script type="text/javascript" src="src/truckPaths.js"></script>
+    <script type="text/javascript" src="src/paths.js"></script>
 </head>
 <body>
 
@@ -13,7 +13,8 @@
             height: 369,
         scene: {
             preload: preload,   
-            create: create
+            create: create,
+            update: update
         }
     };
 
@@ -24,119 +25,145 @@
         // load images
         this.load.image('background', 'assets/background.jpg');
         this.load.image('diceButton', 'assets/dicebutton.jpg');
+        this.load.image('truckButton', 'assets/buytruck.jpg');
         this.load.image('popup', 'assets/pop.jpg');
         this.load.image('close', 'assets/close.jpg');
-        this.load.image('buggy', 'assets/buggy.jpg');
+        this.load.image('buggy', 'assets/buggy.png');
     }
 
-    var button;
-    var popup;
-    var tween = null;
-
+    
+    var movingBuggy = null;
+    var diceRoll = 0;
+    var diceRollText;
     function create ()
     {
-        let money = 0;
-        var diceRoll = 0;
+        var money = 0;
+
 
         let bg = this.add.sprite(0, 0, 'background');
         bg.setScale(0.4);
         bg.setOrigin(0,0);
 
         // Add the roll dice button
-        var diceRollText = this.add.text(700, 26, 'dice roll: n/a', { fontSize: '8px', fill: '#fff' });
+        diceRollText = this.add.text(740, 41, '', { fontSize: '8px', fill: '#fff' });
         var rollDice = this.add.sprite(700, 46, 'diceButton').setInteractive();
         rollDice.setScale(0.3);
         rollDice.on('pointerdown', function (pointer) {
             this.setTint(0xff0000);
         });
-
         rollDice.on('pointerup', function (pointer) {
             this.clearTint();
             diceRoll = Math.floor(Math.random() * 6) + 1;
-            diceRollText.setText('dice roll: ' + diceRoll);
+            diceRollText.setText(diceRoll);
         });
+
+        // Add the truck buying button
+        var truckNo = 6;
+        var truckNoText = this.add.text(740, 21, truckNo, { fontSize: '8px', fill: '#fff' });
+        var buyTruck = this.add.sprite(700, 26, 'truckButton').setInteractive();
+        buyTruck.setScale(0.3);
+        buyTruck.on('pointerdown', function (pointer) {
+            this.setTint(0xff0000);
+        });
+        buyTruck.on('pointerup', function (pointer) {
+            buyTruck.clearTint();
+            if(truckNo != 0) {
+                truckNo = truckNo - 1;
+                truckNoText.setText(truckNo);
+                truckNoText.clearTint();
+
+                // make a truck that has been bought
+                var buggy = new Buggy({scene:this, x:redMine.x, y:redMine.y}, redMine);
+            } else {
+                truckNoText.setTint(0xff0000);
+            }
+        }.bind(this));
         
         // Iterate through each path and draw lines
         graphics = this.add.graphics();
-        drawPath(whiteMine)
-        drawPath(greenMine)
-        drawPath(purpleMine)
-        drawPath(blueMine)
-        drawPath(redMine)
-        drawPath(yellowMine)
-        
-        // 20x 20y is the lorry pool
-        // var truck = this.add.sprite(20, 20, 'buggy', 0).setInteractive();
-        // truck.setScale(0.02);
-        
-        button = this.add.button(game.world.centerX - 95, 460, 'buggy', openWindow, this, 2, 1, 0);
-        button.input.useHandCursor = true;
-
-        //  You can drag the pop-up window around
-        popup = game.add.sprite(game.world.centerX, game.world.centerY, 'popup');
-        popup.alpha = 0.8;
-        popup.anchor.set(0.5);
-        popup.inputEnabled = true;
-        popup.input.enableDrag();
-
-        //  Position the close button to the top-right of the popup sprite (minus 8px for spacing)
-        var pw = (popup.width / 2) - 30;
-        var ph = (popup.height / 2) - 8;
-
-        //  And click the close button to close it down again
-        var closeButton = game.make.sprite(pw, -ph, 'close');
-        closeButton.inputEnabled = true;
-        closeButton.input.priorityID = 1;
-        closeButton.input.useHandCursor = true;
-        closeButton.events.onInputDown.add(closeWindow, this);
-
-        //  Add the "close button" to the popup window image
-        popup.addChild(closeButton);
-
-        //  Hide it awaiting a click
-        popup.scale.set(0.1);
-    }
-
-    function openWindow() {
-
-        if ((tween !== null && tween.isRunning) || popup.scale.x === 1) {
-            return;
-        }
-
-        //  Create a tween that will pop-open the window, but only if it's not already tweening or open
-        tween = game.add.tween(popup.scale).to( { x: 1, y: 1 }, 1000, Phaser.Easing.Elastic.Out, true);
-    }
-
-    function closeWindow() {
-        if (tween && tween.isRunning || popup.scale.x === 0.1) {
-            return;
-        }
-
-        //  Create a tween that will close the window, but only if it's not already tweening or closed
-        tween = game.add.tween(popup.scale).to( { x: 0.1, y: 0.1 }, 500, Phaser.Easing.Elastic.In, true);
+        drawPath(pinkMine);
+        drawPath(greenMine);
+        drawPath(purpleMine);
+        drawPath(blueMine);
+        drawPath(redMine);
+        drawPath(yellowMine);
     }
 
     // Iterative function for looping through a path
     function traversePath(node, accumulator, stopValue) {
-        graphics.lineStyle(2, 0xffffff, 1);
         node.neighbours.forEach(neighbour => {
             if(accumulator != stopValue) {
                 traversePath(neighbour, accumulator + 1, stopValue);
             } else {
-                graphics.fillStyle(0xffffff, 1);
-                graphics.fillCircle(neighbour.x, neighbour.y, 8);
+                graphics.fillStyle(0x000, 1);
+                graphics.fillCircle(neighbour.x, neighbour.y, 2);
+            }
+        });
+    }
+
+    function update() {
+        // Record player mouse location if they can move the buggy move the buggy to the closest location
+        this.input.on('pointerup', function (pointer) {
+            if(movingBuggy) {
+                selectPath(movingBuggy.location, 1, diceRoll, pointer.position, clickedNode => {
+                    movingBuggy.x = clickedNode.x;
+                    movingBuggy.y = clickedNode.y;
+                    movingBuggy.location = clickedNode;
+                    diceRoll = 0;
+                    diceRollText.setText('');
+                    movingBuggy.clearTint();
+                    movingBuggy = null;
+
+                    
+                });
+            }
+        });
+    }
+
+    function selectPath(node, accumulator, stopValue, position, cb) {
+        node.neighbours.forEach(neighbour => {
+            if(accumulator != stopValue) {
+                selectPath(neighbour, accumulator + 1, stopValue, position, cb);
+            } else {
+                // the distance between neighbour.x neighbour.y and position.x position.y
+                var distance = Math.pow(Math.pow(neighbour.x - position.x, 2) + Math.pow(neighbour.y - position.y, 2), 1/2);
+                if(distance < 5) {
+                    cb(neighbour);
+                }
             }
         });
     }
 
     function drawPath(node) {
-        graphics.lineStyle(2, 0xffffff, 1);
+        graphics.lineStyle(1, 0xffffff, 1);
         node.neighbours.forEach(neighbour => {
-            graphics.fillStyle(0xffff00, 1);
+            graphics.fillStyle(0xffffff, 1);
             graphics.lineBetween(neighbour.x, neighbour.y, node.x, node.y);
-            graphics.fillCircle(neighbour.x, neighbour.y, 8);
+            graphics.fillCircle(neighbour.x, neighbour.y, 2);
             drawPath(neighbour);
         });
+    }
+
+    class Buggy extends Phaser.GameObjects.Sprite {
+        constructor(config, location) {
+            super(config.scene, config.x, config.y, 'buggy')
+            //config.scene.add.sprite(config.x, config.y, "buggy").setInteractive()
+            config.scene.add.existing(this);
+            this.location = location;
+            this.setInteractive();
+
+            this.setScale(0.3);
+
+            this.on('pointerdown', function (pointer) {
+                this.setTint(0xff0000);
+            });
+
+            this.on('pointerup', function (pointer) {
+                drawPath(this.location);
+                traversePath(this.location, 1, diceRoll)
+                movingBuggy = this;
+            });
+        }
     }
     </script>
 
